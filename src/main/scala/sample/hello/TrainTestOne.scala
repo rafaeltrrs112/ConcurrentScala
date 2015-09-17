@@ -6,6 +6,7 @@ case class Number(number : Int)
 case class Job()
 case class Seat(direction : Int, name: String)
 case class Close()
+case class Seated(passenger : String)
 object Worker{
   def props(name : String) : Props = Props(new Worker(name))
 }
@@ -14,7 +15,9 @@ class Worker(val assignedDoor : String) extends Actor {
   val SOUTH = 1
   //get count message and print it out
   def receive = {
-    case Seat(direction, string) => println("Sending " + string + " to " + assignedDoor)
+    case Seat(direction, string) =>
+      println("Sending " + string + " to " + assignedDoor)
+      sender ! Seated(string)
   }
 }
 object TrainStation{
@@ -34,6 +37,17 @@ class TrainStation extends Actor{
       case NORTH => workerOne ! Seat(direction, name)
       case SOUTH => workerTwo ! Seat(direction, name)
     }
+    case Seated(name) =>
+      if(number != 1) {
+        println("Passenger : " + name + " has been seated")
+        number +=1
+      }
+      else {
+        println("Passenger : "  + name + " is the last one seated on the train")
+        number+=1
+        println(number + " passengers have been seated in total")
+        context.system.shutdown()
+      }
     case Close =>
       context.system.shutdown()
   }
